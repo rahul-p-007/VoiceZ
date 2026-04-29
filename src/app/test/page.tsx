@@ -1,18 +1,26 @@
-import { prisma } from "@/lib/db";
+import { HydrateClient, prefetch, trpc } from "@/trpc/server";
+import HealthCheck from "./health-check";
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 
-export default async function TestPage() {
-  const voices = await prisma.voice.findMany();
+export default function Test() {
+  prefetch(trpc.health.queryOptions());
   return (
-    <div>
-      <h1>Test Page</h1>
-      <h1 className="text-2xl font-bold mb-4">Voices: {voices.length}</h1>
-      <ul>
-        {voices.map((voice) => (
-          <li key={voice.id}>
-            {voice.name} - {voice.variant}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <HydrateClient>
+      <div className="flex flex-col items-center justify-center gap-4 p-8">
+        <h1 className="text-2xl font-bold">tRPC test Page</h1>
+        <ErrorBoundary
+          fallback={
+            <div className="text-red-500">
+              An error occurred while fetching data.
+            </div>
+          }
+        >
+          <Suspense fallback={<div>Loading...</div>}>
+            <HealthCheck />
+          </Suspense>
+        </ErrorBoundary>
+      </div>
+    </HydrateClient>
   );
 }
